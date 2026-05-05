@@ -1,4 +1,9 @@
-"""Evaluation script for BEIR datasets using XTR retrieval over a ScaNN index.
+"""Evaluation script for BEIR datasets using a WARP index, paired with an
+XTR-trained model.
+
+WARP is an end-to-end multi-vector retrieval engine (like PLAID), so the
+`retrieve.XTR` wrapper short-circuits to the index's own scoring rather than
+running a separate XTR scoring pass on top of token-level hits.
 
 For the ColBERT + PLAID pipeline, see `beir_dataset.py`.
 """
@@ -50,7 +55,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataset_name = args.dataset_name
-    model_name = "lightonai/GTE-ModernColBERT-v1"
+    model_name = "robro612/ModernBERT-XTR"
     model = models.ColBERT(
         model_name_or_path=model_name,
         document_length=300,
@@ -76,10 +81,9 @@ if __name__ == "__main__":
             split="dev" if "msmarco" in dataset_name else "test",
         )
 
-    index = indexes.ScaNN(
+    index = indexes.WARP(
         override=True,
         index_name=f"{dataset_name}_{model_name.split('/')[-1]}",
-        store_embeddings=False,
     )
 
     retriever = retrieve.XTR(index=index)
